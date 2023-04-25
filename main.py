@@ -10,6 +10,8 @@ from mysql.connector import errorcode
 from lxml import html
 from time import sleep
 from datetime import date
+from my_utils import get_connection
+import sys
 
 url_base_1 = creds.url_base_1
 url_base_2 = creds.url_base_2
@@ -131,11 +133,12 @@ def get_existing(insert_dict, connection):
     return found_return
 
 
-def get_update_Set(connection):
+def get_update_Set(connection, id):
     table = creds.table
     sql = "select padctn_id from ( \
             select padctn_id, neighborhood, ROW_NUMBER() OVER (partition by padctn_id order by sale_date desc) rn from %s) r1 \
-            where rn = 1 and neighborhood = 3426 and padctn_id > 48153" % table
+            where rn = 1 and neighborhood = %s" % (table, id)
+    print(sql)
     cursor = connection.cursor()
     cursor.execute(sql)
     id_list = []
@@ -144,12 +147,17 @@ def get_update_Set(connection):
     cursor.close()
     return id_list
 
-def main():
+def update_last_updated(connection, id):
+    sql="""update neighborhoods set last_updated = date(now()), status = 'pending' where id = %s""" % id
+    cursor = connection.cursor()
+    cursor.execute(sql)
+
+def main(neighborhood_id):
 
     try:
-        cnx = mysql.connector.connect(user=creds.user, password=creds.password,
-                                  host=creds.host,
-                                  database=creds.database)
+        cnx = get_connection(creds.user, creds.password,
+                                      creds.host,
+                                      creds.database)
     except mysql.connector.Error as err:
         if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
             print("Something is wrong with your user name or password")
@@ -158,11 +166,7 @@ def main():
         else:
             print(err)
     else:
-        range_max = int(creds.test_home_id)
-        range_max = 500000 # should actually be somewhere around 290100
-        range_min = 0
-        update_list = get_update_Set(cnx)
-        # range_max = 346
+        update_list = get_update_Set(cnx, neighborhood_id)
         blank_count = 0 #count number of blanks in a row to try to figure out where the end is
         for update_id in update_list: # range(range_min, range_max):
             id_in = str(update_id) # str(i)
@@ -171,18 +175,19 @@ def main():
                 blank_count = 0
                 update_values(info_dict, cnx)
                 cnx.commit()
-
             else:
                 blank_count = blank_count + 1
             if blank_count > 1000:
                 print("Found a bunch of blanks in a row - maybe done here:")
                 print(id_in)
                 break
+        update_last_updated(cnx, neighborhood_id)
+        cnx.commit()
         cnx.close()
 
 
 # Press the green button in the gutter to run the script.
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1])
     exit()
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

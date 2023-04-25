@@ -5,6 +5,7 @@ from mysql.connector import errorcode
 import folium
 import random
 import re
+from my_utils import get_connection
 
 TEMPLATE_DIRECTORY = '../pythonProject/analytics_project/dashboard/templates/dashboard'
 STATIC_DIRECTORY = '../pythonProject/analytics_project/dashboard/static/dashboard/html'
@@ -82,24 +83,10 @@ def get_neighborhood_description(connection, neighborhood):
     neighborhood_clean = re.sub('[^A-Za-z0-9 /]+', '', neighborhood)
     return neighborhood_clean
 
-
-def get_connection():
-    try:
-        cnx = mysql.connector.connect(user=creds.user, password=creds.password,
-                                      host=creds.host,
-                                      database=creds.database)
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("Something is wrong with your user name or password")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("Database does not exist")
-        else:
-            print(err)
-    else:
-        return cnx
-
 def main():
-    cnx = get_connection()
+    cnx = get_connection(creds.user, creds.password,
+                                      creds.host,
+                                      creds.database)
     if cnx:
         coord_list = get_coord_set(cnx)
         # subplot = plt.subplot()
