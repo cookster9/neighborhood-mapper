@@ -11,15 +11,15 @@ color_list_glob = ['r', 'g', 'b', 'y', 'c', 'm', 'k']
 
 
 def get_coord_set(connection):
-    sql = "select tda.longitude, tda.latitude, n.id " \
-          "from tn_davidson_addresses tda " \
-          "join ( " \
-          "select padctn_id, property_use, neighborhood, " \
-          "ROW_NUMBER() OVER (partition by padctn_id order by sale_date desc) " \
-          "rn from real_estate_info_scrape) reis on tda.padctn_id = reis.padctn_id " \
-          "join neighborhoods n on reis.neighborhood = n.id " \
-          "where reis.rn = 1 and coalesce(trim(reis.neighborhood),'') <> '' " \
-          "and property_use in ('SINGLE FAMILY');"
+    sql = """select tda.longitude, tda.latitude, reis.neighborhood
+          from tn_davidson_addresses tda  
+          join (  
+          select padctn_id, property_use, neighborhood,  
+          ROW_NUMBER() OVER (partition by padctn_id order by sale_date desc)  
+          rn from real_estate_info_scrape) reis on tda.padctn_id = reis.padctn_id  
+          where reis.rn = 1 
+          and coalesce(trim(reis.neighborhood),'') <> ''  
+          and property_use in ('SINGLE FAMILY');"""
     cursor = connection.cursor()
     cursor.execute(sql)
     rows = cursor.fetchall()
@@ -81,10 +81,11 @@ def get_neighborhood_description(connection, neighborhood):
     return neighborhood_clean
 
 def main():
-    cnx = get_connection(creds.user, creds.password,
-                                      creds.host,
-                                      creds.database)
+    cnx = get_connection(creds.aws_user, creds.aws_pass,
+                                      creds.aws_host,
+                                      creds.aws_database)
     if cnx:
+        print("got connection")
         coord_list = get_coord_set(cnx)
         # subplot = plt.subplot()
 
@@ -118,11 +119,11 @@ def main():
             # plt.scatter(x, y, s=.01, c=color_list_glob[int(neighborhood) % len(color_list_glob)])
 
 
-            sum_x=0
-            sum_y=0
+            sum_x=0.0
+            sum_y=0.0
             for y, x in xy_coord:
-                sum_x=sum_x+x
-                sum_y=sum_y+y
+                sum_x=sum_x+float(x)
+                sum_y=sum_y+float(y)
             avg_x = sum_x/len(xy_coord)
             avg_y = sum_y/len(xy_coord)
 
