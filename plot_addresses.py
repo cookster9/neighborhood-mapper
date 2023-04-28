@@ -1,7 +1,4 @@
-import matplotlib.pyplot as plt
 import creds
-import mysql.connector
-from mysql.connector import errorcode
 import folium
 import random
 import re
