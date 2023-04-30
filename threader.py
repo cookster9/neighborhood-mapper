@@ -4,6 +4,9 @@ import main
 from my_utils import get_connection
 import time
 
+WAIT_FOR_THREADS = 300
+WAIT_FOR_NEIGHBORHOODS = 3600
+
 
 def get_pending_neighborhood(connection):
     sql = """SELECT id
@@ -25,16 +28,27 @@ def set_processing(connection, id):
     return count
 
 
+def get_process_status(connection):
+    sql = """select status from process_list where name = 'Padctn Scraper'""" % id
+    cursor = connection.cursor()
+    cursor.execute(sql)
+    rows = cursor.fetchall
+    cursor.close()
+    return rows[0][0]
+
+
 def threader():
     cnx = get_connection(creds.user, creds.password, creds.host, creds.database)
     while 1:
-        if threading.active_count() < 3:
+        process_status = get_process_status(cnx)
+        if threading.active_count() < 3 and process_status != 'Paused':
             rows = get_pending_neighborhood(cnx)
             if len(rows) == 1:
                 id = rows[0][0]
                 count = set_processing(cnx, id)
                 if count == 1:
                     cnx.commit()
+                    print("Processing neighborhood:", id)
                     t = threading.Thread(target=main.main, args=[id])
                     t.start()
             elif len(rows) > 1:
@@ -42,10 +56,14 @@ def threader():
                 quit()
             else:
                 cnx.close()
-                time.sleep(3600)  #wait an hour to try again
+                print("No neighborhoods to update. Sleeping", WAIT_FOR_NEIGHBORHOODS, "seconds")
+                time.sleep(WAIT_FOR_NEIGHBORHOODS)  #wait an hour to try again
                 cnx = get_connection(creds.user, creds.password, creds.host, creds.database)
         else:
-            time.sleep(300)  # wait 5 minutes to try another thread
+            print("Process status:", process_status)
+            print("Number of threads:", threading.active_count())
+            print("Sleeping", WAIT_FOR_THREADS, "seconds")
+            time.sleep(WAIT_FOR_THREADS)  # wait 5 minutes to try another thread
 
 threader()
 quit()

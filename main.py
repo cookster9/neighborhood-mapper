@@ -20,7 +20,6 @@ url_base_2 = creds.url_base_2
 def get_info_from_id(id):
     home_id = id
     full_url = url_base_1 + home_id + url_base_2
-    print(full_url)
     for j in range(10):
         try:
             get_response = requests.get(full_url)
@@ -106,12 +105,9 @@ def update_values(insert_dict, connection):
         found = get_existing(insert_dict, connection)
         if found == 0:
             insert_values(insert_dict, connection)
-            print("inserted ", insert_dict["padctn_id"])
-        else:
-            print("did nothing")
+            # print("inserted ", insert_dict["padctn_id"])
     else:
         cursor.close()
-        print("updated ", insert_dict["padctn_id"])
 
     return
 
@@ -138,7 +134,6 @@ def get_update_Set(connection, id):
     sql = "select padctn_id from ( \
             select padctn_id, neighborhood, ROW_NUMBER() OVER (partition by padctn_id order by sale_date desc) rn from %s) r1 \
             where rn = 1 and neighborhood = %s" % (table, id)
-    print(sql)
     cursor = connection.cursor()
     cursor.execute(sql)
     id_list = []
@@ -154,36 +149,28 @@ def update_last_updated(connection, id):
 
 def main(neighborhood_id):
 
-    try:
-        cnx = get_connection(creds.user, creds.password,
+    cnx = get_connection(creds.user, creds.password,
                                       creds.host,
                                       creds.database)
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("Something is wrong with your user name or password")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("Database does not exist")
+
+    update_list = get_update_Set(cnx, neighborhood_id)
+    blank_count = 0  #count number of blanks in a row to try to figure out where the end is
+    for update_id in update_list: # range(range_min, range_max):
+        id_in = str(update_id) # str(i)
+        info_dict = get_info_from_id(id_in)
+        if info_dict["map_parcel"].strip() != '':
+            blank_count = 0
+            update_values(info_dict, cnx)
+            cnx.commit()
         else:
-            print(err)
-    else:
-        update_list = get_update_Set(cnx, neighborhood_id)
-        blank_count = 0 #count number of blanks in a row to try to figure out where the end is
-        for update_id in update_list: # range(range_min, range_max):
-            id_in = str(update_id) # str(i)
-            info_dict = get_info_from_id(id_in)
-            if info_dict["map_parcel"].strip() != '':
-                blank_count = 0
-                update_values(info_dict, cnx)
-                cnx.commit()
-            else:
-                blank_count = blank_count + 1
-            if blank_count > 1000:
-                print("Found a bunch of blanks in a row - maybe done here:")
-                print(id_in)
-                break
-        update_last_updated(cnx, neighborhood_id)
-        cnx.commit()
-        cnx.close()
+            blank_count = blank_count + 1
+        if blank_count > 1000:
+            print("Found a bunch of blanks in a row - maybe done here:")
+            print(id_in)
+            break
+    update_last_updated(cnx, neighborhood_id)
+    cnx.commit()
+    cnx.close()
 
 
 # Press the green button in the gutter to run the script.
