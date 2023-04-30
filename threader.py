@@ -29,10 +29,10 @@ def set_processing(connection, id):
 
 
 def get_process_status(connection):
-    sql = """select status from process_list where name = 'Padctn Scraper'""" % id
+    sql = """select status from process_list where name = 'Padctn Scraper'"""
     cursor = connection.cursor()
     cursor.execute(sql)
-    rows = cursor.fetchall
+    rows = cursor.fetchall()
     cursor.close()
     return rows[0][0]
 
