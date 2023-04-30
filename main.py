@@ -149,9 +149,7 @@ def update_last_updated(connection, id):
 
 def main(neighborhood_id):
 
-    cnx = get_connection(creds.user, creds.password,
-                                      creds.host,
-                                      creds.database)
+    cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
 
     update_list = get_update_Set(cnx, neighborhood_id)
     blank_count = 0  #count number of blanks in a row to try to figure out where the end is

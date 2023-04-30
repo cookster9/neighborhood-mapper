@@ -38,7 +38,7 @@ def get_process_status(connection):
 
 
 def threader():
-    cnx = get_connection(creds.user, creds.password, creds.host, creds.database)
+    cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
     while 1:
         process_status = get_process_status(cnx)
         if threading.active_count() < 3 and process_status != 'Paused':
@@ -58,7 +58,7 @@ def threader():
                 cnx.close()
                 print("No neighborhoods to update. Sleeping", WAIT_FOR_NEIGHBORHOODS, "seconds")
                 time.sleep(WAIT_FOR_NEIGHBORHOODS)  #wait an hour to try again
-                cnx = get_connection(creds.user, creds.password, creds.host, creds.database)
+                cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
         else:
             print("Process status:", process_status)
             print("Number of threads:", threading.active_count())
