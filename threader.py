@@ -41,7 +41,9 @@ def threader():
                 print("Bad query")
                 quit()
             else:
-                quit()  # done
+                cnx.close()
+                time.sleep(3600)  #wait an hour to try again
+                cnx = get_connection(creds.user, creds.password, creds.host, creds.database)
         else:
             time.sleep(300)  # wait 5 minutes to try another thread
 

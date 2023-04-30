@@ -148,7 +148,7 @@ def get_update_Set(connection, id):
     return id_list
 
 def update_last_updated(connection, id):
-    sql="""update neighborhoods set last_updated = date(now()), status = 'pending' where id = %s""" % id
+    sql="""update neighborhoods set last_updated = now(), status = 'pending' where id = %s""" % id
     cursor = connection.cursor()
     cursor.execute(sql)
 
