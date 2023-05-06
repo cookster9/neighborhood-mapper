@@ -5,8 +5,6 @@
 
 import requests
 import creds
-import mysql.connector
-from mysql.connector import errorcode
 from lxml import html
 from time import sleep
 from requests_html import HTMLSession
