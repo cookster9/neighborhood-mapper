@@ -4,6 +4,8 @@ data_mover.py
 data_mover2.py
 temp_utils/
 
+.idea/
+.DS_Store
 
 #assets
 *.pdf
