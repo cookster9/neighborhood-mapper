@@ -41,8 +41,8 @@ def threader():
     cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
     print(cnx)
     while 1:
-        if cnx.is_connected() == False:
-            cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
+        if not cnx.is_connected():
+            cnx.reconnect()
         process_status = get_process_status(cnx)
         if threading.active_count() < 3 and process_status != 'Paused':
             rows = get_pending_neighborhood(cnx)
