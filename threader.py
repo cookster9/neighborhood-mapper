@@ -5,6 +5,8 @@ from my_utils import get_connection
 from datetime import datetime
 import time
 from zoneinfo import ZoneInfo
+from plot_addresses import core
+
 
 WAIT_FOR_THREADS = 300
 WAIT_FOR_NEIGHBORHOODS = 3600
@@ -69,6 +71,8 @@ def threader():
                 time.sleep(WAIT_FOR_NEIGHBORHOODS)  #wait an hour to try again
                 cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
         else:
+            print("Creating updated map")
+            core.main()
             us_central_dt = datetime.now(tz=ZoneInfo("America/Chicago"))
             print(us_central_dt)
             print("Process status:", process_status)
