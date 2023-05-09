@@ -2,7 +2,9 @@ import creds
 import threading
 import main
 from my_utils import get_connection
+from datetime import datetime
 import time
+from zoneinfo import ZoneInfo
 
 WAIT_FOR_THREADS = 300
 WAIT_FOR_NEIGHBORHOODS = 3600
@@ -51,9 +53,8 @@ def threader():
                 count = set_processing(cnx, id)
                 if count == 1:
                     cnx.commit()
-                    t = time.localtime()
-                    current_time = time.strftime("%H:%M:%S", t)
-                    print(current_time)
+                    us_central_dt = datetime.now(tz=ZoneInfo("America/Chicago"))
+                    print(us_central_dt)
                     print("Processing neighborhood:", id)
                     t = threading.Thread(target=main.main, args=[id])
                     t.start()
@@ -62,16 +63,14 @@ def threader():
                 quit()
             else:
                 cnx.close()
-                t = time.localtime()
-                current_time = time.strftime("%H:%M:%S", t)
-                print(current_time)
+                us_central_dt = datetime.now(tz=ZoneInfo("America/Chicago"))
+                print(us_central_dt)
                 print("No neighborhoods to update. Sleeping", WAIT_FOR_NEIGHBORHOODS, "seconds")
                 time.sleep(WAIT_FOR_NEIGHBORHOODS)  #wait an hour to try again
                 cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
         else:
-            t = time.localtime()
-            current_time = time.strftime("%H:%M:%S", t)
-            print(current_time)
+            us_central_dt = datetime.now(tz=ZoneInfo("America/Chicago"))
+            print(us_central_dt)
             print("Process status:", process_status)
             print("Number of threads:", threading.active_count())
             print("Sleeping", WAIT_FOR_THREADS, "seconds")
