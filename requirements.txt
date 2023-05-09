@@ -15,7 +15,7 @@ MarkupSafe==2.1.2
 mysql-connector-python==8.0.33
 numpy==1.24.3
 parse==1.19.0
-plot-addresses @ git+https://github.com/cookster9/neighborhood-plotter.git@4739b4466dcd13c920ba3d877ef3dce5a379ca3e
+plot-addresses @ git+https://github.com/cookster9/neighborhood-plotter.git@0a8cd0a0762db8b2842992a541490a0d93249758
 protobuf==3.20.3
 pyee==8.2.2
 pyppeteer==1.0.2
