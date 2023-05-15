@@ -76,14 +76,14 @@ def threader():
                     quit()
                 else:
                     cnx.close()
+                    print("Creating updated map")
+                    core.main()
                     us_central_dt = datetime.now(tz=ZoneInfo("America/Chicago"))
                     print(us_central_dt)
                     print("No neighborhoods to update. Sleeping", WAIT_FOR_NEIGHBORHOODS, "seconds")
                     time.sleep(WAIT_FOR_NEIGHBORHOODS)  #wait an hour to try again
                     cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
             else:
-                print("Creating updated map")
-                core.main()
                 us_central_dt = datetime.now(tz=ZoneInfo("America/Chicago"))
                 print(us_central_dt)
                 print("Process status:", process_status)
