@@ -50,7 +50,15 @@ def threader():
         if not cnx.is_connected():
             cnx.reconnect()
         process_status = get_process_status(cnx)
-        if process_status != 'Paused':
+        if process_status.lower() == 'paused':
+            print("Processed paused")
+            us_central_dt = datetime.now(tz=ZoneInfo("America/Chicago"))
+            print(us_central_dt)
+            print("Process status:", process_status)
+            print("Number of threads:", threading.active_count())
+            print("Sleeping", WAIT_FOR_THREADS, "seconds")
+            time.sleep(WAIT_FOR_THREADS)  # wait 5 minutes to try another thread
+        else:
             if threading.active_count() < 3:
                 rows = get_pending_neighborhood(cnx)
                 if len(rows) == 1:
@@ -83,14 +91,6 @@ def threader():
                 print("Sleeping", WAIT_FOR_THREADS, "seconds")
                 # 5 minutes might be too much but who cares?
                 time.sleep(WAIT_FOR_THREADS)  # wait 5 minutes to try another thread
-        else:
-            print("Processed paused")
-            us_central_dt = datetime.now(tz=ZoneInfo("America/Chicago"))
-            print(us_central_dt)
-            print("Process status:", process_status)
-            print("Number of threads:", threading.active_count())
-            print("Sleeping", WAIT_FOR_THREADS, "seconds")
-            time.sleep(WAIT_FOR_THREADS)  # wait 5 minutes to try another thread
 
 
 threader()
