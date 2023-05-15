@@ -48,31 +48,40 @@ def threader():
         if not cnx.is_connected():
             cnx.reconnect()
         process_status = get_process_status(cnx)
-        if threading.active_count() < 3 and process_status != 'Paused':
-            rows = get_pending_neighborhood(cnx)
-            if len(rows) == 1:
-                id = rows[0][0]
-                count = set_processing(cnx, id)
-                if count == 1:
-                    cnx.commit()
+        if process_status != 'Paused':
+            if threading.active_count() < 3:
+                rows = get_pending_neighborhood(cnx)
+                if len(rows) == 1:
+                    id = rows[0][0]
+                    count = set_processing(cnx, id)
+                    if count == 1:
+                        cnx.commit()
+                        us_central_dt = datetime.now(tz=ZoneInfo("America/Chicago"))
+                        print(us_central_dt)
+                        print("Processing neighborhood:", id)
+                        t = threading.Thread(target=main.main, args=[id])
+                        t.start()
+                elif len(rows) > 1:
+                    print("Bad query")
+                    quit()
+                else:
+                    cnx.close()
                     us_central_dt = datetime.now(tz=ZoneInfo("America/Chicago"))
                     print(us_central_dt)
-                    print("Processing neighborhood:", id)
-                    t = threading.Thread(target=main.main, args=[id])
-                    t.start()
-            elif len(rows) > 1:
-                print("Bad query")
-                quit()
+                    print("No neighborhoods to update. Sleeping", WAIT_FOR_NEIGHBORHOODS, "seconds")
+                    time.sleep(WAIT_FOR_NEIGHBORHOODS)  #wait an hour to try again
+                    cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
             else:
-                cnx.close()
+                print("Creating updated map")
+                core.main()
                 us_central_dt = datetime.now(tz=ZoneInfo("America/Chicago"))
                 print(us_central_dt)
-                print("No neighborhoods to update. Sleeping", WAIT_FOR_NEIGHBORHOODS, "seconds")
-                time.sleep(WAIT_FOR_NEIGHBORHOODS)  #wait an hour to try again
-                cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
+                print("Process status:", process_status)
+                print("Number of threads:", threading.active_count())
+                print("Sleeping", WAIT_FOR_THREADS, "seconds")
+                time.sleep(WAIT_FOR_THREADS)  # wait 5 minutes to try another thread
         else:
-            print("Creating updated map")
-            core.main()
+            print("Processed paused")
             us_central_dt = datetime.now(tz=ZoneInfo("America/Chicago"))
             print(us_central_dt)
             print("Process status:", process_status)
