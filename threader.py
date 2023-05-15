@@ -45,6 +45,8 @@ def threader():
     cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
     print(cnx)
     while 1:
+        if not cnx:
+            cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
         if not cnx.is_connected():
             cnx.reconnect()
         process_status = get_process_status(cnx)
@@ -79,6 +81,7 @@ def threader():
                 print("Process status:", process_status)
                 print("Number of threads:", threading.active_count())
                 print("Sleeping", WAIT_FOR_THREADS, "seconds")
+                # 5 minutes might be too much but who cares?
                 time.sleep(WAIT_FOR_THREADS)  # wait 5 minutes to try another thread
         else:
             print("Processed paused")
@@ -88,6 +91,7 @@ def threader():
             print("Number of threads:", threading.active_count())
             print("Sleeping", WAIT_FOR_THREADS, "seconds")
             time.sleep(WAIT_FOR_THREADS)  # wait 5 minutes to try another thread
+
 
 threader()
 quit()
