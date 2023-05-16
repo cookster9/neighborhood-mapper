@@ -87,5 +87,7 @@ def threader():
                 time.sleep(WAIT_FOR_THREADS)  # wait 5 minutes to try another thread
 
 
-threader()
-quit()
+if __name__ == '__main__':
+    threader()
+    print("exiting threader")
+    exit()
