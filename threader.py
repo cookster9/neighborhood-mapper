@@ -4,7 +4,10 @@ import main
 from my_utils import get_connection
 from datetime import datetime
 import time
-from zoneinfo import ZoneInfo
+try:
+    from zoneinfo import ZoneInfo
+except:
+    from backports.zoneinfo import ZoneInfo
 
 
 WAIT_FOR_THREADS = 300
