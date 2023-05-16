@@ -5,7 +5,6 @@ from my_utils import get_connection
 from datetime import datetime
 import time
 from zoneinfo import ZoneInfo
-from plot_addresses import core
 
 
 WAIT_FOR_THREADS = 300
@@ -75,21 +74,16 @@ def threader():
                     print("Bad query")
                     quit()
                 else:
-                    cnx.close()
-                    print("Creating updated map")
-                    core.main()
                     us_central_dt = datetime.now(tz=ZoneInfo("America/Chicago"))
                     print(us_central_dt)
                     print("No neighborhoods to update. Sleeping", WAIT_FOR_NEIGHBORHOODS, "seconds")
                     time.sleep(WAIT_FOR_NEIGHBORHOODS)  #wait an hour to try again
-                    cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
             else:
                 us_central_dt = datetime.now(tz=ZoneInfo("America/Chicago"))
                 print(us_central_dt)
                 print("Process status:", process_status)
                 print("Number of threads:", threading.active_count())
                 print("Sleeping", WAIT_FOR_THREADS, "seconds")
-                # 5 minutes might be too much but who cares?
                 time.sleep(WAIT_FOR_THREADS)  # wait 5 minutes to try another thread
 
 
