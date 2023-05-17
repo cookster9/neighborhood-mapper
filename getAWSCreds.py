@@ -7,11 +7,12 @@
 import boto3
 from botocore.exceptions import ClientError
 import json
-
+import platform
 
 def get_secret():
-
-    secret_name = "prod/realestate/mysql"
+    secret_name = "prod/realestate/mysql-private"
+    if platform.system() == 'Darwin':
+        secret_name = "prod/realestate/mysql"
     region_name = "us-east-1"
 
     # Create a Secrets Manager client
