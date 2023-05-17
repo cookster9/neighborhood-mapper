@@ -1,4 +1,4 @@
-import creds
+import getAWSCreds
 import threading
 import main
 from my_utils import get_connection
@@ -44,11 +44,13 @@ def get_process_status(connection):
 
 
 def threader():
-    cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
+    creds_json = getAWSCreds.secretjson
+    cnx = get_connection(creds_json["username"], creds_json["password"], creds_json["host"], creds_json["dbname"])
     print(cnx)
     while 1:
         if not cnx:
-            cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
+            cnx = get_connection(creds_json["username"], creds_json["password"], creds_json["host"]
+                                 , creds_json["dbname"])
         if not cnx.is_connected():
             cnx.reconnect()
         process_status = get_process_status(cnx)

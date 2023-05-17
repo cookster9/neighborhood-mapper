@@ -4,15 +4,15 @@
 # Press Double ⇧ to search everywhere for classes, files, tool windows, actions, and settings.
 
 import requests
-import creds
+import getAWSCreds
 from lxml import html
 from time import sleep
 from datetime import date
 from my_utils import get_connection
 import sys
 
-url_base_1 = creds.url_base_1
-url_base_2 = creds.url_base_2
+url_base_1 = 'http://www.padctn.org/prc/property/'
+url_base_2 = '/card/1'
 
 
 def get_info_from_id(id):
@@ -146,8 +146,8 @@ def update_last_updated(connection, id):
     cursor.execute(sql)
 
 def main(neighborhood_id):
-
-    cnx = get_connection(creds.aws_user, creds.aws_pass, creds.aws_host, creds.aws_database)
+    creds_json = getAWSCreds.secretjson
+    cnx = get_connection(creds_json["username"], creds_json["password"], creds_json["host"], creds_json["dbname"])
 
     update_list = get_update_Set(cnx, neighborhood_id)
     blank_count = 0  #count number of blanks in a row to try to figure out where the end is
