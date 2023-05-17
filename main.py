@@ -13,7 +13,7 @@ import sys
 
 url_base_1 = 'http://www.padctn.org/prc/property/'
 url_base_2 = '/card/1'
-
+table = 'real_estate_info_scrape'
 
 def get_info_from_id(id):
     home_id = id
@@ -70,7 +70,6 @@ def parse_date(date_in):
 def insert_values(insert_dict, connection):
     cursor = connection.cursor()
 
-    table = creds.table
     columns = ', '.join("`" + str(x).replace('/', '_') + "`" for x in insert_dict.keys())
     values = ', '.join("'" + str(x).replace('/', '_') + "'" for x in insert_dict.values())
 
@@ -85,7 +84,7 @@ def insert_values(insert_dict, connection):
 def update_values(insert_dict, connection):
     cursor = connection.cursor()
 
-    table = creds.table
+
     # columns = ', '.join("`" + str(x).replace('/', '_') + "`" for x in insert_dict.keys())
     # values = ', '.join("'" + str(x).replace('/', '_') + "'" for x in insert_dict.values())
     sql = ''
@@ -111,7 +110,6 @@ def update_values(insert_dict, connection):
 
 
 def get_existing(insert_dict, connection):
-    table = creds.table
     sql = ''
     if insert_dict["sale_date"] == '' or insert_dict["sale_date"] == 'null':
         sql = "select id from %s where padctn_id = %s and sale_Date is null" % \
@@ -128,7 +126,6 @@ def get_existing(insert_dict, connection):
 
 
 def get_update_Set(connection, id):
-    table = creds.table
     sql = "select padctn_id from ( \
             select padctn_id, neighborhood, ROW_NUMBER() OVER (partition by padctn_id order by sale_date desc) rn from %s) r1 \
             where rn = 1 and neighborhood = %s" % (table, id)
