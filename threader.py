@@ -42,11 +42,17 @@ def get_process_status(connection):
     cursor.close()
     return rows[0][0]
 
+def update_all_processing(connection):
+    sql = """update neighborhoods set status = 'pending' where id > 0"""
+    cursor = connection.cursor()
+    cursor.execute(sql)
+    cursor.close()
 
 def threader():
     creds_json = getAWSCreds.secretjson
     cnx = get_connection(creds_json["username"], creds_json["password"], creds_json["host"], creds_json["dbname"])
     print(cnx)
+    update_all_processing(cnx)
     while 1:
         if not cnx:
             cnx = get_connection(creds_json["username"], creds_json["password"], creds_json["host"]
@@ -91,8 +97,9 @@ def threader():
                 print("Sleeping", WAIT_FOR_THREADS, "seconds")
                 time.sleep(WAIT_FOR_THREADS)  # wait 5 minutes to try another thread
 
-
+print("about to start main in the threader")
 if __name__ == '__main__':
+    print("starting threader")
     threader()
     print("exiting threader")
     exit()
