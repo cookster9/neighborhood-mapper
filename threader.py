@@ -10,7 +10,7 @@ except:
     from backports.zoneinfo import ZoneInfo
 
 
-WAIT_FOR_THREADS = 300
+WAIT_FOR_THREADS = 60
 WAIT_FOR_NEIGHBORHOODS = 3600
 
 
