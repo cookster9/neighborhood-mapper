@@ -1,4 +1,14 @@
-import getAWSCreds
+from sys import platform
+# import creds
+# not really platform specific, but i have a local version on mac and prod in linux so this is an easy way to
+# change credentials for a local dev environment
+if platform == "linux" or platform == "linux2":
+    import getAWSCreds
+elif platform == "darwin":
+    import creds_info as getAWSCreds
+elif platform == "win32":
+    import creds_info as getAWSCreds
+
 import threading
 import main
 from my_utils import get_connection

@@ -10,12 +10,23 @@ from time import sleep
 from datetime import date
 from my_utils import get_connection
 import sys
+from sys import platform
+# import creds
+# not really platform specific, but i have a local version on mac and prod in linux so this is an easy way to
+# change credentials for a local dev environment
+if platform == "linux" or platform == "linux2":
+    import getAWSCreds
+elif platform == "darwin":
+    import creds_info as getAWSCreds
+elif platform == "win32":
+    import local_creds as getAWSCreds
 
 url_base_1 = 'http://www.padctn.org/prc/property/'
 url_base_2 = '/card/1'
 table = 'real_estate_info_scrape'
 
-def get_info_from_id(id):
+
+def get_info_from_id(id, connection):
     home_id = id
     full_url = url_base_1 + home_id + url_base_2
     for j in range(10):
@@ -33,14 +44,25 @@ def get_info_from_id(id):
 
             sale_date_value, sale_date_year_week = parse_date(tree.xpath(sale_date_xpath)[0])
 
+            neighborhood = tree.xpath(neighborhood_xpath)[0].strip()
+            if neighborhood == '':
+                neighborhood = '-1'
+            else:
+                neighborhood_exists = get_neighborhood(neighborhood, connection)
+                if neighborhood_exists == 0:
+                    neighborhood = '-1'
+
+            address_id = get_address(home_id, connection)
+
             out_dict = {"padctn_id": home_id, "map_parcel": tree.xpath(map_parcel_xpath)[0],
                         "mailing_address": tree.xpath(mailing_address_xpath)[0],
                         "sale_date": sale_date_value, "sale_price": tree.xpath(sale_price_xpath)[0],
                         "property_use": tree.xpath(property_use_xpath)[0].strip(), "zone": tree.xpath(zone_xpath)[0],
-                        "neighborhood": tree.xpath(neighborhood_xpath)[0].strip(), "location": tree.xpath(location_xpath)[0].strip(),
-                        "year_week": sale_date_year_week
+                        "neighborhoods_id": neighborhood, "location": tree.xpath(location_xpath)[0].strip(),
+                        "year_week": sale_date_year_week, "tn_davidson_addresses_id": address_id
                         }
-        except:
+        except Exception as e:
+            print(e)
             print("Waiting to try again")
             sleep(60)
         else:
@@ -52,6 +74,15 @@ def get_info_from_id(id):
     print("Got lost or locked out")
     quit()
 
+def get_address(padctn_id, cnx):
+    sql = "select id from tn_davidson_addresses where padctn_id = {0} limit 1".format(padctn_id)
+    cursor = cnx.cursor()
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    if len(rows) > 0:
+        return rows[0][0]
+    else:
+        return 'NULL'
 
 def parse_date(date_in):
     date_out = date_in.strip()
@@ -70,11 +101,17 @@ def parse_date(date_in):
 def insert_values(insert_dict, connection):
     cursor = connection.cursor()
 
-    columns = ', '.join("`" + str(x).replace('/', '_') + "`" for x in insert_dict.keys())
-    values = ', '.join("'" + str(x).replace('/', '_') + "'" for x in insert_dict.values())
+    address = insert_dict["tn_davidson_addresses_id"]
+    if address is None or address.strip() == 'None':
+        address == 'NULL'
 
-    sql = "INSERT INTO %s ( %s ) VALUES ( %s );" % (table, columns, values)
-    # print(sql)
+    columns = ', '.join("`" + str(x).replace('/', '_') + "`" for x in insert_dict.keys())
+
+    del insert_dict["tn_davidson_addresses_id"]
+    values = ', '.join("'" + str(x).replace('/', '_') + "'" for x in insert_dict.values())
+    # values = values + ', ' + address
+
+    sql = "INSERT INTO %s ( %s ) VALUES ( %s, %s );" % (table, columns, values, address)
 
     cursor.execute(sql)
     cursor.close()
@@ -108,6 +145,14 @@ def update_values(insert_dict, connection):
 
     return
 
+def get_neighborhood(n, connection):
+    sql = 'select * from neighborhoods where id = {0}'.format(n)
+    cursor = connection.cursor()
+    cursor.execute(sql)
+    cursor.fetchall()
+    found_return = cursor.rowcount
+    cursor.close()
+    return found_return
 
 def get_existing(insert_dict, connection):
     sql = ''
@@ -127,8 +172,8 @@ def get_existing(insert_dict, connection):
 
 def get_update_Set(connection, id):
     sql = "select padctn_id from ( \
-            select padctn_id, neighborhood, ROW_NUMBER() OVER (partition by padctn_id order by sale_date desc) rn from %s) r1 \
-            where rn = 1 and neighborhood = %s" % (table, id)
+            select padctn_id, neighborhoods_id, ROW_NUMBER() OVER (partition by padctn_id order by sale_date desc) rn from %s) r1 \
+            where rn = 1 and neighborhoods_id = %s" % (table, id)
     cursor = connection.cursor()
     cursor.execute(sql)
     id_list = []
@@ -150,7 +195,7 @@ def main(neighborhood_id):
     blank_count = 0  #count number of blanks in a row to try to figure out where the end is
     for update_id in update_list: # range(range_min, range_max):
         id_in = str(update_id) # str(i)
-        info_dict = get_info_from_id(id_in)
+        info_dict = get_info_from_id(id_in, cnx)
         if info_dict["map_parcel"].strip() != '':
             blank_count = 0
             update_values(info_dict, cnx)
