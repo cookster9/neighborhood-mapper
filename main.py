@@ -102,7 +102,7 @@ def insert_values(insert_dict, connection):
     cursor = connection.cursor()
 
     address = insert_dict["tn_davidson_addresses_id"]
-    if address is None or address.strip() == 'None':
+    if address is None:
         address == 'NULL'
 
     columns = ', '.join("`" + str(x).replace('/', '_') + "`" for x in insert_dict.keys())
