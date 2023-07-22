@@ -26,7 +26,7 @@ url_base_2 = '/card/1'
 table = 'real_estate_info_scrape'
 
 
-def get_info_from_id(id, connection):
+def get_info_from_id(id, connection, neighborhood_id):
     home_id = id
     full_url = url_base_1 + home_id + url_base_2
     for j in range(10):
@@ -44,13 +44,6 @@ def get_info_from_id(id, connection):
 
             sale_date_value, sale_date_year_week = parse_date(tree.xpath(sale_date_xpath)[0])
 
-            neighborhood = tree.xpath(neighborhood_xpath)[0].strip()
-            if neighborhood == '':
-                neighborhood = '-1'
-            else:
-                neighborhood_exists = get_neighborhood(neighborhood, connection)
-                if neighborhood_exists == 0:
-                    neighborhood = '-1'
 
             address_id = get_address(home_id, connection)
 
@@ -58,7 +51,7 @@ def get_info_from_id(id, connection):
                         "mailing_address": tree.xpath(mailing_address_xpath)[0],
                         "sale_date": sale_date_value, "sale_price": tree.xpath(sale_price_xpath)[0],
                         "property_use": tree.xpath(property_use_xpath)[0].strip(), "zone": tree.xpath(zone_xpath)[0],
-                        "neighborhoods_id": neighborhood, "location": tree.xpath(location_xpath)[0].strip(),
+                        "neighborhoods_id": neighborhood_id, "location": tree.xpath(location_xpath)[0].strip(),
                         "year_week": sale_date_year_week, "tn_davidson_addresses_id": address_id
                         }
         except Exception as e:
@@ -145,15 +138,6 @@ def update_values(insert_dict, connection):
 
     return
 
-def get_neighborhood(n, connection):
-    sql = 'select * from neighborhoods where id = {0}'.format(n)
-    cursor = connection.cursor()
-    cursor.execute(sql)
-    cursor.fetchall()
-    found_return = cursor.rowcount
-    cursor.close()
-    return found_return
-
 def get_existing(insert_dict, connection):
     sql = ''
     if insert_dict["sale_date"] == '' or insert_dict["sale_date"] == 'null':
@@ -195,10 +179,10 @@ def main(neighborhood_id):
     blank_count = 0  #count number of blanks in a row to try to figure out where the end is
     for update_id in update_list: # range(range_min, range_max):
         id_in = str(update_id) # str(i)
-        info_dict = get_info_from_id(id_in, cnx)
+        info_dict = get_info_from_id(id_in, cnx, neighborhood_id)
         if info_dict["map_parcel"].strip() != '':
             blank_count = 0
-            update_values(info_dict, cnx)
+            update_values(info_dict, cnx, neighborhood_id)
             cnx.commit()
         else:
             blank_count = blank_count + 1
