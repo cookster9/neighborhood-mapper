@@ -182,7 +182,7 @@ def main(neighborhood_id):
         info_dict = get_info_from_id(id_in, cnx, neighborhood_id)
         if info_dict["map_parcel"].strip() != '':
             blank_count = 0
-            update_values(info_dict, cnx, neighborhood_id)
+            update_values(info_dict, cnx)
             cnx.commit()
         else:
             blank_count = blank_count + 1
