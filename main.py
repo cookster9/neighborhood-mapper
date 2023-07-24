@@ -49,7 +49,7 @@ def get_info_from_id(id, connection, neighborhood_id):
 
             out_dict = {"padctn_id": home_id, "map_parcel": tree.xpath(map_parcel_xpath)[0],
                         "mailing_address": tree.xpath(mailing_address_xpath)[0],
-                        "sale_date": sale_date_value, "sale_price": tree.xpath(sale_price_xpath)[0],
+                        "sale_date": sale_date_value, "sale_price": tree.xpath(sale_price_xpath)[0].strip(),
                         "property_use": tree.xpath(property_use_xpath)[0].strip(), "zone": tree.xpath(zone_xpath)[0],
                         "neighborhoods_id": neighborhood_id, "location": tree.xpath(location_xpath)[0].strip(),
                         "year_week": sale_date_year_week, "tn_davidson_addresses_id": address_id
