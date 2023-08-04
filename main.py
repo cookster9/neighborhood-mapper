@@ -38,6 +38,7 @@ def get_info_from_id(id, connection, neighborhood_id):
             sale_date_xpath = '//*[@id="propertyOverview"]/div[4]/ul/li[6]/text()'
             sale_price_xpath = '//*[@id="propertyOverview"]/div[4]/ul/li[7]/text()'
             property_use_xpath = '//*[@id="content"]/div/div[4]/div[1]/ul/li[7]/text()'
+            sq_ft_xpath='//*[@id="content"]/div/div[4]/div[2]/div/div[1]/ul/li[3]/text()'
             zone_xpath = '//*[@id="content"]/div/div[4]/div[1]/ul/li[8]/text()'
             neighborhood_xpath = '//*[@id="content"]/div/div[4]/div[1]/ul/li[9]/text()'
             location_xpath = '//*[@id="propertyOverview"]/ul/li[2]/text()'
@@ -53,6 +54,7 @@ def get_info_from_id(id, connection, neighborhood_id):
                         "property_use": tree.xpath(property_use_xpath)[0].strip(), "zone": tree.xpath(zone_xpath)[0],
                         "neighborhoods_id": neighborhood_id, "location": tree.xpath(location_xpath)[0].strip(),
                         "year_week": sale_date_year_week, "tn_davidson_addresses_id": address_id
+                        ,"square_footage": tree.xpath(sq_ft_xpath)[0].strip()
                         }
         except Exception as e:
             print(e)
@@ -121,9 +123,17 @@ def update_values(insert_dict, connection):
     if insert_dict["sale_date"] == '' or insert_dict["sale_date"] == 'null':
         sql = "update %s set location = '%s' where padctn_id = %s;" % \
               (table, insert_dict["location"], insert_dict["padctn_id"])
+        sql = """update {0} 
+        set location = '{2}'
+        ,square_footage = {3}
+        where padctn_id = {1};""".format(table, insert_dict["padctn_id"], insert_dict["location"], insert_dict["square_footage"])
     else:
         sql = "update %s set location = '%s' where padctn_id = %s and sale_Date = '%s';" % \
               (table, insert_dict["location"], insert_dict["padctn_id"], insert_dict["sale_date"])
+        sql = """update {0} 
+                set location = '{3}'
+                ,square_footage = {4}
+                where padctn_id = {1} and sale_Date = '{2}';""".format(table, insert_dict["padctn_id"], insert_dict["square_footage"])
 
     cursor.execute(sql)
 
