@@ -121,15 +121,11 @@ def update_values(insert_dict, connection):
     # values = ', '.join("'" + str(x).replace('/', '_') + "'" for x in insert_dict.values())
     sql = ''
     if insert_dict["sale_date"] == '' or insert_dict["sale_date"] == 'null':
-        sql = "update %s set location = '%s' where padctn_id = %s;" % \
-              (table, insert_dict["location"], insert_dict["padctn_id"])
         sql = """update {0} 
         set location = '{2}'
         ,square_footage = {3}
         where padctn_id = {1};""".format(table, insert_dict["padctn_id"], insert_dict["location"], insert_dict["square_footage"])
     else:
-        sql = "update %s set location = '%s' where padctn_id = %s and sale_Date = '%s';" % \
-              (table, insert_dict["location"], insert_dict["padctn_id"], insert_dict["sale_date"])
         sql = """update {0} 
                 set location = '{3}'
                 ,square_footage = {4}
