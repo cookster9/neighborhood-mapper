@@ -29,7 +29,6 @@ table = 'real_estate_info_scrape'
 def get_info_from_id(id, connection, neighborhood_id):
     home_id = id
     full_url = url_base_1 + home_id + url_base_2
-    print(full_url)
     for j in range(10):
         try:
             get_response = requests.get(full_url)
@@ -151,20 +150,22 @@ def insert_values(insert_dict, connection):
 def update_values(insert_dict, connection):
     cursor = connection.cursor()
 
-
-    # columns = ', '.join("`" + str(x).replace('/', '_') + "`" for x in insert_dict.keys())
-    # values = ', '.join("'" + str(x).replace('/', '_') + "'" for x in insert_dict.values())
+    address = insert_dict["tn_davidson_addresses_id"]
+    if address is None or address == 'NULL':
+        address == None
     sql = ''
     if insert_dict["sale_date"] == '' or insert_dict["sale_date"] == 'null':
         sql = """update {0} 
         set location = '{2}'
         ,square_footage = '{3}'
-        where padctn_id = {1};""".format(table, insert_dict["padctn_id"], insert_dict["location"], insert_dict["square_footage"])
+        ,tn_davidson_addresses_id = {4}
+        where padctn_id = {1};""".format(table, insert_dict["padctn_id"], insert_dict["location"], insert_dict["square_footage"], address)
     else:
         sql = """update {0} 
                 set location = '{3}'
                 ,square_footage = '{4}'
-                where padctn_id = {1} and sale_date = '{2}';""".format(table, insert_dict["padctn_id"],insert_dict["sale_date"], insert_dict["location"], insert_dict["square_footage"])
+                ,tn_davidson_addresses_id = {5}
+                where padctn_id = {1} and sale_date = '{2}';""".format(table, insert_dict["padctn_id"],insert_dict["sale_date"], insert_dict["location"], insert_dict["square_footage"], address)
 
     cursor.execute(sql)
 
@@ -222,7 +223,6 @@ def main(neighborhood_id):
         id_in = str(update_id) # str(i)
         info_dict = get_info_from_id(id_in, cnx, neighborhood_id)
         if info_dict["map_parcel"].strip() != '':
-            print(info_dict)
             blank_count = 0
             update_values(info_dict, cnx)
             cnx.commit()
