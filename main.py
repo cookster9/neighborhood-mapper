@@ -42,17 +42,18 @@ def get_info_from_id(id, connection, neighborhood_id):
             zone_xpath = '//*[@id="content"]/div/div[4]/div[1]/ul/li[8]/text()'
             neighborhood_xpath = '//*[@id="content"]/div/div[4]/div[1]/ul/li[9]/text()'
             location_xpath = '//*[@id="propertyOverview"]/ul/li[2]/text()'
+            location = tree.xpath(location_xpath)[0].strip()
 
             sale_date_value, sale_date_year_week = parse_date(tree.xpath(sale_date_xpath)[0])
 
 
-            address_id = get_address(home_id, connection)
+            address_id = get_address(home_id, connection, neighborhood_id, location)
 
             out_dict = {"padctn_id": home_id, "map_parcel": tree.xpath(map_parcel_xpath)[0],
                         "mailing_address": tree.xpath(mailing_address_xpath)[0],
                         "sale_date": sale_date_value, "sale_price": tree.xpath(sale_price_xpath)[0].strip(),
                         "property_use": tree.xpath(property_use_xpath)[0].strip(), "zone": tree.xpath(zone_xpath)[0],
-                        "neighborhoods_id": neighborhood_id, "location": tree.xpath(location_xpath)[0].strip(),
+                        "neighborhoods_id": neighborhood_id, "location": location,
                         "year_week": sale_date_year_week, "tn_davidson_addresses_id": address_id
                         ,"square_footage": tree.xpath(sq_ft_xpath)[0].strip()
                         }
@@ -69,7 +70,7 @@ def get_info_from_id(id, connection, neighborhood_id):
     print("Got lost or locked out")
     quit()
 
-def get_address(padctn_id, cnx):
+def get_address(padctn_id, cnx, neighborhood_id, location):
     sql = """select tn_davidson_addresses_id 
     from real_estate_info_scrape 
     where padctn_id = {0} 
@@ -82,7 +83,35 @@ def get_address(padctn_id, cnx):
     if len(rows) > 0:
         return rows[0][0]
     else:
-        return 'NULL'
+        neighborhood_latitude = get_neighborhood_lat(cnx, neighborhood_id)
+        sql = """select id
+            from tn_davidson_addresses t
+            where '{0}' like concat('%',add_number,'%')
+            and '{0}' like concat('%',streetname,'%')
+            order by abs({1}-latitude)
+            limit 1
+            ;
+            """.format(location, neighborhood_latitude)
+        cursor = cnx.cursor()
+        cursor.execute(sql)
+        rows = cursor.fetchall()
+        if len(rows) > 0:
+            return rows[0][0]
+        else:
+            return 'NULL'
+
+def get_neighborhood_lat(cnx, neighborhood_id):
+    sql = """select coalesce(latitude,0) latitude
+        from neighborhoods 
+        where id = {0} 
+        """.format(neighborhood_id)
+    cursor = cnx.cursor()
+    cursor.execute(sql)
+    rows = cursor.fetchall()
+    if len(rows) > 0:
+        return rows[0][0]
+    else:
+        return 0
 
 def parse_date(date_in):
     date_out = date_in.strip()
