@@ -70,7 +70,12 @@ def get_info_from_id(id, connection, neighborhood_id):
     quit()
 
 def get_address(padctn_id, cnx):
-    sql = "select id from tn_davidson_addresses where padctn_id = {0} limit 1".format(padctn_id)
+    sql = """select tn_davidson_addresses_id 
+    from real_estate_info_scrape 
+    where padctn_id = {0} 
+    and tn_davidson_addresses_id is not null
+    order by sale_date desc
+    limit 1""".format(padctn_id)
     cursor = cnx.cursor()
     cursor.execute(sql)
     rows = cursor.fetchall()
