@@ -23,8 +23,6 @@ elif platform == "win32":
 
 url_base_1 = 'http://www.padctn.org/prc/property/'
 url_base_2 = '/card/1'
-table = 'real_estate_info_scrape'
-
 
 def get_info_from_id(id, connection, neighborhood_id):
     home_id = id
@@ -71,14 +69,22 @@ def get_info_from_id(id, connection, neighborhood_id):
     quit()
 
 def get_address(padctn_id, cnx, neighborhood_id, location):
+    # # Example of a parameterized query
+    # query = "SELECT * FROM users WHERE username = %s AND password = %s"
+    # user_input = ("user_input_username", "user_input_password")
+    #
+    # cursor.execute(query, user_input)
+    # result = cursor.fetchall()
+
     sql = """select tn_davidson_addresses_id 
     from real_estate_info_scrape 
-    where padctn_id = {0} 
+    where padctn_id = %s 
     and tn_davidson_addresses_id is not null
     order by sale_date desc
-    limit 1""".format(padctn_id)
+    limit 1"""
+    user_input = (padctn_id,)
     cursor = cnx.cursor()
-    cursor.execute(sql)
+    cursor.execute(sql, user_input)
     rows = cursor.fetchall()
     if len(rows) > 0:
         return rows[0][0]
@@ -86,15 +92,17 @@ def get_address(padctn_id, cnx, neighborhood_id, location):
         neighborhood_latitude = get_neighborhood_lat(cnx, neighborhood_id)
         sql = """select id
             from tn_davidson_addresses t
-            where '{0}' like concat('%',add_number,'%')
-            and '{0}' like concat('%',streetname,'%')
-            order by abs({1}-latitude)
+            where %s like concat('%',add_number,'%')
+            and %s like concat('%',streetname,'%')
+            order by abs(%s-latitude)
             limit 1
             ;
-            """.format(location, neighborhood_latitude)
+            """
+        user_input = (location, location, neighborhood_latitude)
         cursor = cnx.cursor()
-        cursor.execute(sql)
+        cursor.execute(sql, user_input)
         rows = cursor.fetchall()
+        cursor.close()
         if len(rows) > 0:
             return rows[0][0]
         else:
@@ -103,11 +111,13 @@ def get_address(padctn_id, cnx, neighborhood_id, location):
 def get_neighborhood_lat(cnx, neighborhood_id):
     sql = """select coalesce(latitude,0) latitude
         from neighborhoods 
-        where id = {0} 
-        """.format(neighborhood_id)
+        where id = %s
+        """
+    user_input = (neighborhood_id,)
     cursor = cnx.cursor()
-    cursor.execute(sql)
+    cursor.execute(sql, user_input)
     rows = cursor.fetchall()
+    cursor.close()
     if len(rows) > 0:
         return rows[0][0]
     else:
@@ -139,9 +149,11 @@ def insert_values(insert_dict, connection):
     columns = ', '.join("`" + str(x).replace('/', '_') + "`" for x in insert_dict.keys())
     values = ', '.join("'" + str(x).replace('/', '_') + "'" for x in insert_dict.values())
     # values = values + ', ' + address
-    sql = """INSERT INTO {0} ( {1}, tn_davidson_addresses_id ) 
-    VALUES ( {2}, {3});""".format(table, columns, values, address)
-
+    sql = """INSERT INTO real_estate_info_scrape ( {0}, tn_davidson_addresses_id ) 
+    VALUES ( {1}, {2});"""
+    # too hard to parameterize with mysql
+    #user_input = (columns, values, address)
+    sql = sql.format(columns, values, address)
     cursor.execute(sql)
     cursor.close()
     # print(insert_dict)
@@ -155,19 +167,20 @@ def update_values(insert_dict, connection):
         address == None
     sql = ''
     if insert_dict["sale_date"] == '' or insert_dict["sale_date"] == 'null':
-        sql = """update {0} 
-        set location = '{2}'
-        ,square_footage = '{3}'
-        ,tn_davidson_addresses_id = {4}
-        where padctn_id = {1};""".format(table, insert_dict["padctn_id"], insert_dict["location"], insert_dict["square_footage"], address)
+        sql = """update real_estate_info_scrape
+        set location = %s
+        ,square_footage = %s
+        ,tn_davidson_addresses_id = %s
+        where padctn_id = %s;"""
+        user_input = (insert_dict["location"], insert_dict["square_footage"], address, insert_dict["padctn_id"])
     else:
-        sql = """update {0} 
-                set location = '{3}'
-                ,square_footage = '{4}'
-                ,tn_davidson_addresses_id = {5}
-                where padctn_id = {1} and sale_date = '{2}';""".format(table, insert_dict["padctn_id"],insert_dict["sale_date"], insert_dict["location"], insert_dict["square_footage"], address)
-
-    cursor.execute(sql)
+        sql = """update real_estate_info_scrape
+                set location = %s
+                ,square_footage = %s
+                ,tn_davidson_addresses_id = %s
+                where padctn_id = %s and sale_date = %s;"""
+        user_input = (insert_dict["location"], insert_dict["square_footage"], address, insert_dict["padctn_id"],insert_dict["sale_date"])
+    cursor.execute(sql, user_input)
 
     if cursor.rowcount == 0:
         cursor.close()
@@ -183,13 +196,13 @@ def update_values(insert_dict, connection):
 def get_existing(insert_dict, connection):
     sql = ''
     if insert_dict["sale_date"] == '' or insert_dict["sale_date"] == 'null':
-        sql = "select id from %s where padctn_id = %s and sale_Date is null" % \
-              (table, insert_dict["padctn_id"])
+        sql = "select id from real_estate_info_scrape where padctn_id = %s and sale_Date is null"
+        user_input = (insert_dict["padctn_id"],)
     else:
-        sql = "select id from %s where padctn_id = %s and sale_Date= '%s'" % \
-          (table, insert_dict["padctn_id"], insert_dict["sale_date"])
+        sql = "select id from real_estate_info_scrape where padctn_id = %s and sale_Date= %s"
+        user_input = (insert_dict["padctn_id"], insert_dict["sale_date"])
     cursor = connection.cursor()
-    cursor.execute(sql)
+    cursor.execute(sql, user_input)
     cursor.fetchall()
     found_return = cursor.rowcount
     cursor.close()
@@ -197,11 +210,15 @@ def get_existing(insert_dict, connection):
 
 
 def get_update_Set(connection, id):
-    sql = "select padctn_id from ( \
-            select padctn_id, neighborhoods_id, ROW_NUMBER() OVER (partition by padctn_id order by sale_date desc) rn from %s) r1 \
-            where rn = 1 and neighborhoods_id = %s" % (table, id)
+    sql = """select padctn_id from (
+            select padctn_id, neighborhoods_id, ROW_NUMBER() OVER (partition by padctn_id order by sale_date desc) rn 
+            from real_estate_info_scrape) r1
+            where rn = 1 and neighborhoods_id = %s
+            and property_use in ('SINGLE FAMILY','RESIDENTIAL CONDO');"""
+    user_input = (id,)
     cursor = connection.cursor()
-    cursor.execute(sql)
+    print(user_input)
+    cursor.execute(sql, user_input)
     id_list = []
     for (row) in cursor:
         id_list.append(row[0])
@@ -209,9 +226,11 @@ def get_update_Set(connection, id):
     return id_list
 
 def update_last_updated(connection, id):
-    sql="""update neighborhoods set last_updated = now(), status = 'pending' where id = %s""" % id
+    sql="""update neighborhoods set last_updated = now(), status = 'pending' where id = %s"""
+    user_input = (id,)
     cursor = connection.cursor()
-    cursor.execute(sql)
+    cursor.execute(sql, user_input)
+    cursor.close()
 
 def main(neighborhood_id):
     creds_json = getAWSCreds.secretjson
