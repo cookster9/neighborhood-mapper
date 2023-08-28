@@ -187,7 +187,7 @@ def update_values(insert_dict, connection):
         found = get_existing(insert_dict, connection)
         if found == 0:
             insert_values(insert_dict, connection)
-            # print("inserted ", insert_dict["padctn_id"])
+            print("inserted ", insert_dict["padctn_id"])
     else:
         cursor.close()
 
@@ -211,13 +211,12 @@ def get_existing(insert_dict, connection):
 
 def get_update_Set(connection, id):
     sql = """select padctn_id from (
-            select padctn_id, neighborhoods_id, ROW_NUMBER() OVER (partition by padctn_id order by sale_date desc) rn 
+            select padctn_id, neighborhoods_id, property_use, ROW_NUMBER() OVER (partition by padctn_id order by sale_date desc) rn 
             from real_estate_info_scrape) r1
             where rn = 1 and neighborhoods_id = %s
             and property_use in ('SINGLE FAMILY','RESIDENTIAL CONDO');"""
     user_input = (id,)
     cursor = connection.cursor()
-    print(user_input)
     cursor.execute(sql, user_input)
     id_list = []
     for (row) in cursor:
