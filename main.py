@@ -142,7 +142,7 @@ def insert_values(insert_dict, connection):
 
     address = insert_dict["tn_davidson_addresses_id"]
     if address is None or address == 'NULL':
-        address == None
+        address = None
         # insert_dict["tn_davidson_addresses_id"] = address
 
     del insert_dict["tn_davidson_addresses_id"]
@@ -164,7 +164,7 @@ def update_values(insert_dict, connection):
 
     address = insert_dict["tn_davidson_addresses_id"]
     if address is None or address == 'NULL':
-        address == None
+        address = None
     sql = ''
     if insert_dict["sale_date"] == '' or insert_dict["sale_date"] == 'null':
         sql = """update real_estate_info_scrape
