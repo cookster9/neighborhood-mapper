@@ -233,7 +233,6 @@ def update_last_updated(connection, id):
 
 def main(neighborhood_id):
     creds_json = getAWSCreds.secretjson
-    print(creds_json)
     cnx = get_connection(creds_json["username"], creds_json["password"], creds_json["host"], creds_json["dbname"])
 
     update_list = get_update_set(cnx, neighborhood_id)
