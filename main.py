@@ -209,7 +209,7 @@ def get_existing(insert_dict, connection):
     return found_return
 
 
-def get_update_Set(connection, id):
+def get_update_set(connection, id):
     sql = """select padctn_id from (
             select padctn_id, neighborhoods_id, property_use, ROW_NUMBER() OVER (partition by padctn_id order by sale_date desc) rn 
             from real_estate_info_scrape) r1
@@ -233,9 +233,10 @@ def update_last_updated(connection, id):
 
 def main(neighborhood_id):
     creds_json = getAWSCreds.secretjson
+    print(creds_json)
     cnx = get_connection(creds_json["username"], creds_json["password"], creds_json["host"], creds_json["dbname"])
 
-    update_list = get_update_Set(cnx, neighborhood_id)
+    update_list = get_update_set(cnx, neighborhood_id)
     blank_count = 0  #count number of blanks in a row to try to figure out where the end is
     for update_id in update_list: # range(range_min, range_max):
         id_in = str(update_id) # str(i)
