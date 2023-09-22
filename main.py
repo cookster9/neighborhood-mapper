@@ -150,11 +150,12 @@ def insert_values(insert_dict, connection):
     values = ', '.join("'" + str(x).replace('/', '_') + "'" for x in insert_dict.values())
     # values = values + ', ' + address
     sql = """INSERT INTO real_estate_info_scrape ( {0}, tn_davidson_addresses_id ) 
-    VALUES ( {1}, ?);"""
+    VALUES ( {1}, :address);"""
     # too hard to parameterize with mysql
 
     sql = sql.format(columns, values)
-    user_input = (address,)
+    user_input = {"address":address}
+    print(sql)
     cursor.execute(sql, user_input)
     cursor.close()
     # print(insert_dict)
