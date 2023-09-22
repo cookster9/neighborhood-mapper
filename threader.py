@@ -99,6 +99,7 @@ def threader():
                     print(us_central_dt)
                     print("No neighborhoods to update. Sleeping", WAIT_FOR_NEIGHBORHOODS, "seconds")
                     time.sleep(WAIT_FOR_NEIGHBORHOODS)  #wait an hour to try again
+                    update_all_pending(cnx) #in case something went wrong in the middle of one of them it's not stuck processing
             else:
                 us_central_dt = datetime.now(tz=ZoneInfo("America/Chicago"))
                 print(us_central_dt)
